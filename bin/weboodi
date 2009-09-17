@@ -18,7 +18,7 @@ $VERBOSE = true
 $KCODE = 'u'
 
 OPTS = %w[ user url ]
-FLAGS = %w[ save-password sync:s help:h verbose:v ]
+FLAGS = %w[ save-password sync:s help:h verbose:v reg ]
 CMDS = %w[ list sync ical next ]
 DEFAULT_CMD = :list
 DEFAULT_URL = 'http://oodi.tkk.fi/'
@@ -61,8 +61,8 @@ Commands:
 
  Common options for list, ical and next:
 
-   --planned                   Include planned studies (default)
-   --reg                       Include registrations (not yet implemented)
+   --reg                       Include registrations (default)
+   --planned                   Include planned studies (not yet implemented)
    --completed                 Include completed studies (not yet implemented)
    --inactive                  Include inactive studies (not yet implemented)
    --all                       All of above (not yet implemented)
@@ -70,7 +70,7 @@ Commands:
 Use case:
 
 Export ical calendar of current registrations (lectures, exercises and examinations):
-$ weboodi --url http://oodi.tkk.fi/ ical --reg > cal.ics
+$ weboodi ical > cal.ics
 > the script asks for username and password and saves username and url
 > for the next time
 
