@@ -1,0 +1,11 @@
+First time login to weboodi, save the password for convenience:
+$ weboodi --save-password sync
+
+Export ical calendar of all registered courses:
+$ weboodi ical --reg > output.ics
+
+Display some info
+$ weboodi list
+
+"What's next"
+$ weboodi now

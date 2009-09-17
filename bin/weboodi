@@ -1,0 +1,187 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'mechanize'
+require 'icalendar'
+require 'date'
+
+begin
+	require 'weboodi/output.rb'
+	require 'weboodi/parse.rb'
+rescue LoadError => e
+	$: << File.expand_path(File.dirname(__FILE__) + '/../lib')
+	require 'weboodi/output.rb'
+	require 'weboodi/parse.rb'
+end
+
+$VERBOSE = true
+$KCODE = 'u'
+
+OPTS = %w[ user url ]
+FLAGS = %w[ save-password sync:s help:h verbose:v ]
+CMDS = %w[ list sync ical next ]
+DEFAULT_CMD = :list
+DEFAULT_URL = 'http://oodi.tkk.fi/'
+
+def usage
+	puts <<END
+weboodi [global options] <command> [command options]
+
+Global options:
+
+  --user username             WebOodi or WebLogin username
+
+  --url url                   WebOodi URL
+                              Default: #{DEFAULT_URL}
+
+  --save-password             Also save the password to user config to ~/.weboodi
+															Use with care, the password isn't encrypted (but it's
+                              obscured).
+
+  -s
+  --sync                      Synchronize cached course information
+
+  -h
+  --help                      This help
+
+  -v
+  --verbose                   More verbose output, also list output has
+                              different date format with this
+
+
+Commands:
+
+  list                        Text format presentation of courses
+
+  ical                        Outputs iCal format calendar file to stdout
+
+  next                        Outputs todays and tomorrows plan
+
+  sync                        Basically the same than --sync list >/dev/null
+
+ Common options for list, ical and next:
+
+   --planned                   Include planned studies (default)
+   --reg                       Include registrations (not yet implemented)
+   --completed                 Include completed studies (not yet implemented)
+   --inactive                  Include inactive studies (not yet implemented)
+   --all                       All of above (not yet implemented)
+
+Use case:
+
+Export ical calendar of current registrations (lectures, exercises and examinations):
+$ weboodi --url http://oodi.tkk.fi/ ical --reg > cal.ics
+> the script asks for username and password and saves username and url
+> for the next time
+
+List all courses in a nice text format:
+$ weboodi list
+> this doesn't need network connection because the script uses cached file from the
+> last request
+
+List all courses again, but this time synchronize everything again from WebOodi.
+Also save the password. Notice that no username is asked nor url given. If the
+old session is still valid, the script doesn't actually need the password and
+thus doesn't save it.
+$ weboodi --save-password --sync list
+
+"What's next"
+$ weboodi next
+END
+	exit 0
+end
+
+# Makes password less grepable - this has nothing to do with encrypting!
+def before_save input
+	output = {:user => input[:user], :url => input[:url], :frontpage_url => input[:frontpage_url]}
+	old_kcode, $KCODE = $KCODE, ''
+	output[:password] = input[:password].split('').map{|x| "%0xff" % (x[0]+150)}.join if input[:password] && input[:'save-password']
+	output
+ensure
+	$KCODE = old_kcode
+end
+def after_load input
+	input = input.dup
+	input[:password] = input[:password].scan(/.../).map{|x| (x.to_i(16)-150).chr}.join if input[:password]
+	input
+end
+
+def parse_opts
+	$cmd = DEFAULT_CMD
+	flags, aliases, cmd, args = [], {}, nil, ARGV.dup
+
+	FLAGS.each do |n|
+		n, a = n.split ':'
+		flags << n
+		aliases[a] = n if a
+	end
+
+	while args.any?
+		input = args.shift
+		if CMDS.include?(input)
+			$cmd = input.to_sym
+		elsif input =~ /^-([^-].*)$/
+			input = $1
+			if aliases.include?(input)
+				args.unshift '--'+aliases[input]
+			else
+				raise "Unknown argument '-#{input}'"
+			end
+		elsif input =~ /^--(.+)$/
+			input = $1
+			if flags.include?(input)
+				$options[input.to_sym] = !$options[input.to_sym]
+			elsif OPTS.include?(input)
+				raise "Missing an argument to option '--#{input}'" if args.empty?
+				$options[input.to_sym] = args.shift
+			else
+				raise "Unknown argument '--#{input}'"
+			end
+		else
+			raise "Unknown argument '#{input}'"
+		end
+	end
+
+	usage if $options[:help]
+end
+
+$config_root = File.expand_path ENV['HOME'] + '/.weboodi'
+Dir.mkdir $config_root unless File.exists? $config_root
+
+if File.exists?($config_root + '/config')
+	$options = after_load Marshal.load(File.open($config_root + '/config', 'r'))
+else
+	$options = {:url => DEFAULT_URL}
+end
+
+old_options = $options.dup
+parse_opts
+
+$logger = Logger.new $stderr
+$logger.level = Logger::INFO unless $options[:verbose]
+
+begin
+case $cmd
+when :list
+	print_courses WebOodi.courses
+when :sync
+	$options[:sync] = true
+	WebOodi.courses
+when :ical
+	print_ical WebOodi.courses
+when :next
+	print_next WebOodi.courses
+else
+	$stderr.puts "#{$cmd} is not implemented"
+	exit 1
+end
+rescue => e
+	puts e.backtrace
+	raise e
+end
+
+$stderr.puts "Done."
+
+File.open($config_root + '/config', 'w') do |file|
+	file.write Marshal.dump(before_save($options))
+end if $options != old_options
