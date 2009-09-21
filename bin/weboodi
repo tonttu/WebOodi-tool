@@ -169,6 +169,7 @@ when :sync
 	WebOodi.courses
 when :ical
 	print_ical WebOodi.courses
+	$stderr.puts "Done."
 when :next
 	print_next WebOodi.courses
 else
@@ -179,8 +180,6 @@ rescue => e
 	puts e.backtrace
 	raise e
 end
-
-$stderr.puts "Done."
 
 File.open($config_root + '/config', 'w') do |file|
 	file.write Marshal.dump(before_save($options))

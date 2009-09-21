@@ -1,11 +1,25 @@
-First time login to weboodi, save the password for convenience:
+WebOodi tool gives a command line interface to (HUT) WebOodi with
+some additional features. Currently it can export iCalendar schedule
+of lectures, exercises and exams of all courses where user has
+registered.
+
+WebOodi tool is released under the GPL.
+
+
+Example use case:
+
+Login to WebOodi and fetch all relevant data:
 $ weboodi --save-password sync
 
-Export ical calendar of all registered courses:
+Export iCal calendar of all registered courses:
 $ weboodi ical --reg > output.ics
 
 Display some info
 $ weboodi list
 
 "What's next"
-$ weboodi now
+$ weboodi next
+
+
+Later: Export new calendar, but also resync all data from WebOodi
+$ weboodi --sync ical > output.ics
