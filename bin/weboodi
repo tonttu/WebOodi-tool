@@ -35,7 +35,7 @@ Global options:
                               Default: #{DEFAULT_URL}
 
   --save-password             Also save the password to user config to ~/.weboodi
-															Use with care, the password isn't encrypted (but it's
+                              Use with care, the password isn't encrypted (but it's
                               obscured).
 
   -s
