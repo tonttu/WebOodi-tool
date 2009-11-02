@@ -23,10 +23,17 @@ class WebOodi
 		return if name.nil?
 		name = clean name.text
 
+		found = false
 		table.css('table.OK_OT table.OK_OT td.OK_OT').each do |td|
 			tmp = td.css('input.submit2').first
 			place = tmp ? clean(tmp['value']) : nil
 			target << [name, clean(td.text), place]
+			found = tmp
+		end
+		table.css('input.submit2').each do |submit|
+			td = submit.parent
+			next if td.name != 'td' || td == found
+			target << [name, clean(td.text), clean(submit['value'])]
 		end
 	end
 
@@ -56,7 +63,7 @@ class WebOodi
 			page2 = page2.form_with(:name => 'query') do |login|
 				login.user = self.class.username
 				login.pass = self.class.password
-			end.submit
+			end.dup.submit
 			@front_page = relay page2
 			return
 		end

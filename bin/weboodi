@@ -5,14 +5,10 @@ require 'mechanize'
 require 'icalendar'
 require 'date'
 
-begin
-	require 'weboodi/output.rb'
-	require 'weboodi/parse.rb'
-rescue LoadError => e
-	$: << File.expand_path(File.dirname(__FILE__) + '/../lib')
-	require 'weboodi/output.rb'
-	require 'weboodi/parse.rb'
-end
+dir = File.expand_path File.dirname(__FILE__) + '/../lib'
+$:.unshift dir if File.exists?("#{dir}/weboodi/output.rb")
+require 'weboodi/output.rb'
+require 'weboodi/parse.rb'
 
 $VERBOSE = true
 $KCODE = 'u'

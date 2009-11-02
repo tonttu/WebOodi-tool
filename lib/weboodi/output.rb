@@ -3,7 +3,7 @@ WDAYS = %w[su ma ti ke to pe la]
 
 def each_date text
 	parts = text.split
-	raise "parts.size != 3" if parts.size != 3
+	return if parts.size != 3
 
 	date, day, time = parts
 
