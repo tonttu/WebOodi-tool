@@ -32,7 +32,7 @@ class WebOodi
 		end
 		table.css('input.submit2').each do |submit|
 			td = submit.parent
-			next if td.name != 'td' || td == found
+			next if td.name != 'td' || submit == found
 			target << [name, clean(td.text), clean(submit['value'])]
 		end
 	end
